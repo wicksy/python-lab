@@ -227,10 +227,10 @@ while playing:
         except:
             print("Invalid entry")
             colok = False
-        else:
-            if myrow == 0 and mycol == 0:
-                print_board(board)
-                print(ship_pos)
+        #else:
+        #    if myrow == 0 and mycol == 0:
+        #        print_board(board)
+        #        print(ship_pos)
 
     if check_ship(board,myrow,mycol):
         board[myrow][mycol] = "X"
