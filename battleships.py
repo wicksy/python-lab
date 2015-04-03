@@ -178,7 +178,7 @@ while playing:
     while not rowok:
         try:
             myrow = input("Enter row guess: ")
-            x = abs(myrow)
+            x = abs(float(myrow))
             y = int(x)
             if x - y > 0:
               print("Integers only. No floats")
@@ -205,7 +205,7 @@ while playing:
     while not colok:
         try:
             mycol = input("Enter col guess: ")
-            x = abs(mycol)
+            x = abs(float(mycol))
             y = int(x)
             if x - y > 0:
               print("Integers only. No floats")
@@ -247,3 +247,4 @@ while playing:
         print("Row " + str(myrow) + ", Col " + str(mycol) + " is already filled")
 else:
   exit(0)
+
