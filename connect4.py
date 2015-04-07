@@ -26,7 +26,7 @@ def usage():
     print("host\t: IP address to connect with")
     sys.exit(0)
 
-def die(code,sock):
+def die(code, sock):
     try:
         sock.send("DIE")
         sock.close()
@@ -87,10 +87,10 @@ def startserver(ip, port, sock):
     except socket.error as err:
         print str(err)
         print("Socket error")
-        die(100,sock)
+        die(100, sock)
     except:
         print("Unexpected error starting server on port " + str(port))
-        die(100,sock)
+        die(100, sock)
     else:
         return connection
 
@@ -100,7 +100,20 @@ def serverread(sock, connection):
        return data
     except:
        print("Server ended unexpectedly")
-       die(100,sock)
+       die(100, sock)
+
+def fill_column(board, col, mycolor):
+    free = False
+    col = int(col)
+    for i in range(board_rows - 1, -1, -1):
+        if board[i][col] == "O":
+            board[i][col] = mycolor
+            free = True
+            break
+    if free:
+        return True
+    else:
+        return False
 
 def main():
 
@@ -109,7 +122,7 @@ def main():
     server = 0
     server_ip = "0.0.0.0"
     ready = "READY"
-    gamedata = "NOT READY"
+    handshake = "NOT READY"
     mefirst = "ME FIRST"
     youfirst = "YOU FIRST"
 
@@ -166,45 +179,49 @@ def main():
         print("Acting as client")
         iamclient = True
         sock.send(ready)
-        gamedata = sock.recv(1024)
-        if gamedata in mefirst + youfirst:
+        handshake = sock.recv(1024)
+        if handshake in mefirst + youfirst:
             print("Sever connected OK")
-            if gamedata == youfirst:
+            if handshake == youfirst:
                 print("I shall be going first")
                 myturn = True
+                mycolor = "R"
             else:
                 print("Opponent will be going first")
                 myturn = False
+                mycolor = "Y"
         else:
-            print("Unexpected response from server: " + gamedata)
-            die(100,sock)
+            print("Unexpected response from server: " + handshake)
+            die(100, sock)
     else:
         print("Acting as server")
         iamserver = True
         print("Waiting for client...")
         connection = startserver(server_ip, port, sock)
-        gamedata = serverread(sock, connection)
-        if gamedata == ready:
+        handshake = serverread(sock, connection)
+        if handshake == ready:
             print("Client connected OK")
             print("Picking who starts at random")
             if random.randint(0, 1000) % 2 == 0:
                 print("I shall be going first")
                 myturn = True
+                mycolor = "R"
                 connection.send(mefirst)
             else:
                 print("Opponent will be going first")
                 myturn = False
+                mycolor = "Y"
                 connection.send(youfirst)
         else:
-            print("Unexpected response from client: " + gamedata)
-            die(100,connection)
+            print("Unexpected response from client: " + handshake)
+            die(100, connection)
 
     initialise_board(board)
-    print_board(board)
 
 # Main play loop
 
     while playing:
+        print_board(board)
         if myturn: 
             colok = False
             while not colok:
@@ -223,7 +240,7 @@ def main():
                 except KeyboardInterrupt:
                     print("")
                     print("Cancelling game")
-                    die(100,sock)
+                    die(100, sock)
 
                 try:
                     if mycol < 0 or mycol >= board_cols:
@@ -234,21 +251,19 @@ def main():
                     colok = False
 
                 if colok:
+                    gamedata = mycol
                     if iamserver:
                         try:
                             connection.send(str(mycol))
                         except:
                             print("Unexpected error sending response")
-                            die(100,sock)
+                            die(100, sock)
                     else:
                         try:
                             sock.send(str(mycol))
                         except:
                             print("Unexpected error sending response")
-                            die(100,sock)
-                    myturn = False
-                else:
-                    myturn = True
+                            die(100, sock)
         else:
             print("Waiting for opponent turn...")
             if iamserver:
@@ -256,21 +271,23 @@ def main():
                     gamedata = serverread(sock, connection)
                 except:
                     print("Unexpected error receiving response")
-                    die(100,sock)
+                    die(100, sock)
             else:
                 try:
                     gamedata = sock.recv(1024)
                 except:
                     print("Unexpected error receiving response")
-                    die(100,sock)
-            print(gamedata)
-            myturn = True
-
+                    die(100, sock)
 
         if gamedata == "DIE" or gamedata == "":
             print("Opponent sent kill message")
-            die(100,sock)
-
+            die(100, sock)
+        else:
+            if fill_column(board, gamedata, mycolor):
+                myturn = not myturn
+            else:
+                print("Column " + str(gamedata) + " is NOT free")
+                
 
 
 
