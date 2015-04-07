@@ -150,6 +150,7 @@ def check_win(board):
 def main():
 
     board = []
+    counters = 0
 
     server = 0
     server_ip = "0.0.0.0"
@@ -324,6 +325,7 @@ def main():
             else:
                 fillcolor = theircolor
             if fill_column(board, gamedata, fillcolor):
+                counters += 1
                 if check_win(board):
                     print_board(board)
                     if myturn:
@@ -332,6 +334,9 @@ def main():
                     else:
                         print("YOU LOST!!!")
                         die(0,sock)
+                if counters >= (board_cols * board_rows):
+                    print("DRAW!!!")
+                    die(0,sock)
                 myturn = not myturn
             else:
                 print("Column " + str(gamedata) + " is NOT free")
