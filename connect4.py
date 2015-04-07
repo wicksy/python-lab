@@ -162,6 +162,21 @@ def check_win(board):
                 if red > 3 or yellow > 3:
                     win = True
 
+    # Check diagonal NE -> SW
+
+    for i in range(board_rows - 4, -1, -1):
+        for j in range(board_cols - 1, board_cols - 5, -1):
+            red = yellow = 0
+            for k in range(0,4):
+                if board[i + k][j - k] == "R":
+                    yellow = 0
+                    red += 1
+                elif board[i + k][j - k] == "Y":
+                    red = 0
+                    yellow += 1
+                if red > 3 or yellow > 3:
+                    win = True
+
     return win
 
 def main():
