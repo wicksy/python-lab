@@ -115,6 +115,12 @@ def fill_column(board, col, mycolor):
     else:
         return False
 
+def check_win(board):
+    for i in range(board_rows - 1, -1, -1):
+        for j in range(board_cols - 1, -1, -1):
+            print board[i][col]
+    return True
+
 def main():
 
     board = []
@@ -292,13 +298,16 @@ def main():
             else:
                 fillcolor = theircolor
             if fill_column(board, gamedata, fillcolor):
+                if check_win(board):
+                    if myturn:
+                        print("YOU WON!!!")
+                        die(0,sock)
+                    else:
+                        print("YOU LOST!!!")
+                        die(0,sock)
                 myturn = not myturn
             else:
                 print("Column " + str(gamedata) + " is NOT free")
-                
-
-
-
 
 # Main
 
