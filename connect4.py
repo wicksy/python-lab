@@ -283,7 +283,15 @@ def main():
             print("Opponent sent kill message")
             die(100, sock)
         else:
-            if fill_column(board, gamedata, mycolor):
+            if mycolor == "R":
+                theircolor = "Y"
+            else:
+                theircolor = "R"
+            if myturn:
+                fillcolor = mycolor
+            else:
+                fillcolor = theircolor
+            if fill_column(board, gamedata, fillcolor):
                 myturn = not myturn
             else:
                 print("Column " + str(gamedata) + " is NOT free")
