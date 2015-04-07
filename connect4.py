@@ -90,7 +90,7 @@ def startserver(ip, port, sock):
         die(100, sock)
     except:
         print("Unexpected error starting server on port " + str(port))
-        die(100, sock)
+        die(110, sock)
     else:
         return connection
 
@@ -100,7 +100,7 @@ def serverread(sock, connection):
        return data
     except:
        print("Server ended unexpectedly")
-       die(100, sock)
+       die(120, sock)
 
 def fill_column(board, col, mycolor):
     free = False
@@ -116,10 +116,36 @@ def fill_column(board, col, mycolor):
         return False
 
 def check_win(board):
+    win = False
     for i in range(board_rows - 1, -1, -1):
+        red = yellow = 0
         for j in range(board_cols - 1, -1, -1):
-            print board[i][col]
-    return True
+            if board[i][j] == "R":
+                yellow = 0
+                red += 1
+            elif board[i][j] == "Y":
+                red = 0
+                yellow += 1
+            if red > 3:
+                win = True
+            if yellow > 3:
+                win = True
+
+    for i in range(board_cols - 1, -1, -1):
+        red = yellow = 0
+        for j in range(board_rows - 1, -1, -1):
+            if board[j][i] == "R":
+                yellow = 0
+                red += 1
+            elif board[j][i] == "Y":
+                red = 0
+                yellow += 1
+            if red > 3:
+                win = True
+            if yellow > 3:
+                win = True
+
+    return win
 
 def main():
 
@@ -198,7 +224,7 @@ def main():
                 mycolor = "Y"
         else:
             print("Unexpected response from server: " + handshake)
-            die(100, sock)
+            die(130, sock)
     else:
         print("Acting as server")
         iamserver = True
@@ -220,7 +246,7 @@ def main():
                 connection.send(youfirst)
         else:
             print("Unexpected response from client: " + handshake)
-            die(100, connection)
+            die(140, connection)
 
     initialise_board(board)
 
@@ -246,7 +272,7 @@ def main():
                 except KeyboardInterrupt:
                     print("")
                     print("Cancelling game")
-                    die(100, sock)
+                    die(150, sock)
 
                 try:
                     if mycol < 0 or mycol >= board_cols:
@@ -263,13 +289,13 @@ def main():
                             connection.send(str(mycol))
                         except:
                             print("Unexpected error sending response")
-                            die(100, sock)
+                            die(160, sock)
                     else:
                         try:
                             sock.send(str(mycol))
                         except:
                             print("Unexpected error sending response")
-                            die(100, sock)
+                            die(170, sock)
         else:
             print("Waiting for opponent turn...")
             if iamserver:
@@ -277,17 +303,17 @@ def main():
                     gamedata = serverread(sock, connection)
                 except:
                     print("Unexpected error receiving response")
-                    die(100, sock)
+                    die(180, sock)
             else:
                 try:
                     gamedata = sock.recv(1024)
                 except:
                     print("Unexpected error receiving response")
-                    die(100, sock)
+                    die(190, sock)
 
         if gamedata == "DIE" or gamedata == "":
             print("Opponent sent kill message")
-            die(100, sock)
+            die(200, sock)
         else:
             if mycolor == "R":
                 theircolor = "Y"
@@ -299,6 +325,7 @@ def main():
                 fillcolor = theircolor
             if fill_column(board, gamedata, fillcolor):
                 if check_win(board):
+                    print_board(board)
                     if myturn:
                         print("YOU WON!!!")
                         die(0,sock)
