@@ -116,7 +116,11 @@ def fill_column(board, col, mycolor):
         return False
 
 def check_win(board):
+
     win = False
+
+    # Check horizontal win
+
     for i in range(board_rows - 1, -1, -1):
         red = yellow = 0
         for j in range(board_cols - 1, -1, -1):
@@ -126,10 +130,10 @@ def check_win(board):
             elif board[i][j] == "Y":
                 red = 0
                 yellow += 1
-            if red > 3:
+            if red > 3 or yellow > 3:
                 win = True
-            if yellow > 3:
-                win = True
+
+    # Check vertical win
 
     for i in range(board_cols - 1, -1, -1):
         red = yellow = 0
@@ -140,10 +144,23 @@ def check_win(board):
             elif board[j][i] == "Y":
                 red = 0
                 yellow += 1
-            if red > 3:
+            if red > 3 or yellow > 3:
                 win = True
-            if yellow > 3:
-                win = True
+
+    # Check diagonal NW -> SE
+
+    for i in range(board_rows - 4, -1, -1):
+        for j in range(0, board_cols - 3, 1):
+            red = yellow = 0
+            for k in range(0,4):
+                if board[i + k][j + k] == "R":
+                    yellow = 0
+                    red += 1
+                elif board[i + k][j + k] == "Y":
+                    red = 0
+                    yellow += 1
+                if red > 3 or yellow > 3:
+                    win = True
 
     return win
 
