@@ -10,10 +10,6 @@ import getopt, os, random, socket, sys, SocketServer
 board_cols = 7
 board_rows = 6
 
-board = []
-server = 0
-server_ip = "0.0.0.0"
-
 try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 except:
@@ -23,15 +19,6 @@ except:
 else:
     pass
 
-class MyTCPHandler(SocketServer.BaseRequestHandler):
-
-    def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print "%s wrote:" % self.client_address[0]
-        print self.data
-        # just send back the same data, but upper-cased
-        self.request.send(self.data.upper())
-
 def usage():
     print("usage: connect4 -p port host")
     print("Options and arguments :")
@@ -39,13 +26,25 @@ def usage():
     print("host\t: IP address to connect with")
     sys.exit(0)
 
+def client_die(code,sock):
+    sock.send("DIE")
+    sock.close()
+    print("Exit with code " + str(code))
+    sys.exit(code)
+
+def server_die(code,sock):
+    sock.send("DIE")
+    sock.close()
+    print("Exit with code " + str(code))
+    sys.exit(code)
+
 def print_board(board):
     for row in board:
         print (" ".join(row))
 
 def initialise_board(board):
     print("Initialising board....")
-    for x in range(0,board_rows):
+    for x in range(0, board_rows):
         board.append(["O"] * board_cols)
 
 def valid_ip(ip):
@@ -71,7 +70,7 @@ def pingtest(ip):
         print(ip + " does not appear to be alive")
         return False
 
-def tryconnect(ip,port,sock):
+def tryconnect(ip, port, sock):
     print("Attempting to connect to " + str(ip) + " on port " + str(port))
     try:
         sock.connect((ip, port))
@@ -79,22 +78,43 @@ def tryconnect(ip,port,sock):
         print("Host does not appear to be listening on that port")
         return False
     else:
+        print("Connected OK")
         return True
 
-def startserver(ip,port,sock, server):
+def startserver(ip, port, sock):
+    server_address = (ip, port)
     try:
-        server = SocketServer.TCPServer((ip, port), MyTCPHandler)
+        sock.bind(server_address)
+        sock.listen(1)
+        connection, client_address = sock.accept()
+    except socket.error as err:
+        print str(err)
+        server_die(100,sock)
     except:
         print("Unexpected error starting server on port " + str(port))
-        sys.exit(105)
+        server_die(100,sock)
     else:
-        try:
-            server.serve_forever()
-        except:
-            print("Server ended unexpectedly")
-            sys.exit(106)
+        return connection
+
+def serverread(sock, connection):
+    try:
+       data = connection.recv(1024)
+       return data
+    except:
+       print("Server ended unexpectedly")
+       server_die(100,sock)
 
 def main():
+
+    board = []
+
+    server = 0
+    server_ip = "0.0.0.0"
+    ready = "READY"
+    gamedata = "NOT READY"
+
+    iamclient = False
+    iamserver = False
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'p:h')
@@ -139,47 +159,56 @@ def main():
     if not pingtest(ip):
         sys.exit(170)
     
-    if tryconnect(ip,port,sock):
+    if tryconnect(ip, port, sock):
         print("Acting as client")
-        sock.send("READY")
+        iamclient = True
+        sock.send(ready)
+        gamedata = sock.recv(1024)
+        if gamedata == ready:
+            print("Sever connected OK")
+        else:
+            print("Unexpected response from server: " + gamedata)
+            client_die(100,sock)
     else:
         print("Acting as server")
-        startserver(server_ip,port,sock,socket)
+        iamserver = True
+        print("Waiting for client...")
+        connection = startserver(server_ip, port, sock)
+        gamedata = serverread(sock, connection)
+        if gamedata == ready:
+            print("Client connected OK")
+            connection.send(ready)
+        else:
+            print("Unexpected response from client: " + gamedata)
+            server_die(100,connection)
+
+    if iamserver:
+        print("Picking who starts at random")
+        if random.randint(0, 1000) % 2 == 0:
+            print("Me first")
+        else:
+            print("Opponent first")
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     initialise_board(board)
     print_board(board)
+
+
 
 # Main
 
 if __name__ == "__main__":
     main()
 
-
-
-
-
-
-#HOST, PORT = "localhost", 9999
-#data = " ".join(sys.argv[1:])
-
-#sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-#sock.connect((HOST, PORT))
-#sock.send(data + "\n")
-
-#received = sock.recv(1024)
-#sock.close()
-
-#print "Sent:     %s" % data
-#print "Received: %s" % received
-
-
-
-
-    # Create the server, binding to localhost on port 9999
-    #server = SocketServer.TCPServer((HOST, PORT), MyTCPHandler)
-
-    # Activate the server; this will keep running until you
-    # interrupt the program with Ctrl-C
-    #server.serve_forever()
