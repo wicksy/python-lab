@@ -86,6 +86,7 @@ def startserver(ip, port, sock):
         connection, client_address = sock.accept()
     except socket.error as err:
         print str(err)
+        print("Socket error")
         die(100,sock)
     except:
         print("Unexpected error starting server on port " + str(port))
@@ -114,9 +115,9 @@ def main():
 
     iamclient = False
     iamserver = False
-    igofirst = False
+    myturn = False
 
-    gameon = True
+    playing = True
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'p:h')
@@ -170,10 +171,10 @@ def main():
             print("Sever connected OK")
             if gamedata == youfirst:
                 print("I shall be going first")
-                igofirst = True
+                myturn = True
             else:
                 print("Opponent will be going first")
-                igofirst = False
+                myturn = False
         else:
             print("Unexpected response from server: " + gamedata)
             die(100,sock)
@@ -188,11 +189,11 @@ def main():
             print("Picking who starts at random")
             if random.randint(0, 1000) % 2 == 0:
                 print("I shall be going first")
-                igofirst = True
+                myturn = True
                 connection.send(mefirst)
             else:
                 print("Opponent will be going first")
-                igofirst = False
+                myturn = False
                 connection.send(youfirst)
         else:
             print("Unexpected response from client: " + gamedata)
@@ -200,6 +201,75 @@ def main():
 
     initialise_board(board)
     print_board(board)
+
+# Main play loop
+
+    while playing:
+        if myturn: 
+            colok = False
+            while not colok:
+                try:
+                    mycol = input("Enter column: ")
+                    x = abs(float(mycol))
+                    y = int(x)
+                    if x - y > 0:
+                      print("Integers only. No floats")
+                      colok = False
+                    else:
+                      mycol = int(mycol)
+                      colok = True
+                except (ValueError, SyntaxError, NameError, TypeError, AttributeError):
+                    print("Please choose an integer")
+                except KeyboardInterrupt:
+                    print("")
+                    print("Cancelling game")
+                    die(100,sock)
+
+                try:
+                    if mycol < 0 or mycol >= board_cols:
+                        print("Must be between 0 and " + str(board_cols-1))
+                        colok = False
+                except:
+                    print("Invalid entry")
+                    colok = False
+
+                if colok:
+                    if iamserver:
+                        try:
+                            connection.send(str(mycol))
+                        except:
+                            print("Unexpected error sending response")
+                            die(100,sock)
+                    else:
+                        try:
+                            sock.send(str(mycol))
+                        except:
+                            print("Unexpected error sending response")
+                            die(100,sock)
+                    myturn = False
+                else:
+                    myturn = True
+        else:
+            print("Waiting for opponent turn...")
+            if iamserver:
+                try:
+                    gamedata = serverread(sock, connection)
+                except:
+                    print("Unexpected error receiving response")
+                    die(100,sock)
+            else:
+                try:
+                    gamedata = sock.recv(1024)
+                except:
+                    print("Unexpected error receiving response")
+                    die(100,sock)
+            print(gamedata)
+            myturn = True
+
+
+        if gamedata == "DIE" or gamedata == "":
+            print("Opponent sent kill message")
+            die(100,sock)
 
 
 
