@@ -15,7 +15,7 @@ try:
 except:
     print("Unexpected error creating socket")
     usage()
-    sys.exit(100)
+    sys.exit(sys.exc_traceback.tb_lineno)
 else:
     pass
 
@@ -87,10 +87,10 @@ def startserver(ip, port, sock):
     except socket.error as err:
         print str(err)
         print("Socket error")
-        die(110, sock)
+        die(sys.exc_traceback.tb_lineno, sock)
     except:
         print("Unexpected error starting server on port " + str(port))
-        die(120, sock)
+        die(sys.exc_traceback.tb_lineno, sock)
     else:
         return connection
 
@@ -100,7 +100,7 @@ def serverread(sock, connection):
        return data
     except:
        print("Server ended unexpectedly")
-       die(130, sock)
+       die(sys.exc_traceback.tb_lineno, sock)
 
 def fill_column(board, col, mycolor):
     free = False
@@ -202,7 +202,7 @@ def main():
     except getopt.GetoptError as err:
         print str(err)
         usage()
-        sys.exit(140)
+        sys.exit(sys.exc_traceback.tb_lineno)
 
     for o, a in opts:
         if o == "-p":
@@ -211,12 +211,12 @@ def main():
             except:
                 print("Please specify port as integer > 1023 and < 65536")
                 usage()
-                sys.exit(150)
+                sys.exit(sys.exc_traceback.tb_lineno)
             else:
                 if port < 1024 or port > 65535:
                     print("Port should be between 1024 and 65535")
                     usage()
-                    sys.exit(160)
+                    sys.exit(sys.exc_traceback.tb_lineno)
         elif o == "-h":
             usage()
         else:
@@ -225,20 +225,20 @@ def main():
     if len(args) == 0:
         print("Please specify IP address to play")
         usage()
-        sys.exit(170)
+        sys.exit(sys.exc_traceback.tb_lineno)
     elif len(args) > 1:
         print("Extra arguments passed")
         usage()
-        sys.exit(180)
+        sys.exit(sys.exc_traceback.tb_lineno)
     else:
         ip = ''.join(args)
         if not valid_ip(ip):
             print("Invalid IP address " + ip)
             usage()
-            sys.exit(190)
+            sys.exit(sys.exc_traceback.tb_lineno)
 
     if not pingtest(ip):
-        sys.exit(200)
+        sys.exit(sys.exc_traceback.tb_lineno)
     
     if tryconnect(ip, port, sock):
         print("Acting as client")
@@ -257,7 +257,7 @@ def main():
                 mycolor = "Y"
         else:
             print("Unexpected response from server: " + handshake)
-            die(210, sock)
+            die(sys.exc_traceback.tb_lineno, sock)
     else:
         print("Acting as server")
         iamserver = True
@@ -279,7 +279,7 @@ def main():
                 connection.send(youfirst)
         else:
             print("Unexpected response from client: " + handshake)
-            die(220, connection)
+            die(sys.exc_traceback.tb_lineno, connection)
 
     initialise_board(board)
 
@@ -305,7 +305,7 @@ def main():
                 except KeyboardInterrupt:
                     print("")
                     print("Cancelling game")
-                    die(230, sock)
+                    die(sys.exc_traceback.tb_lineno, sock)
 
                 try:
                     if mycol < 0 or mycol >= board_cols:
@@ -322,13 +322,13 @@ def main():
                             connection.send(str(mycol))
                         except:
                             print("Unexpected error sending response")
-                            die(240, sock)
+                            die(sys.exc_traceback.tb_lineno, sock)
                     else:
                         try:
                             sock.send(str(mycol))
                         except:
                             print("Unexpected error sending response")
-                            die(250, sock)
+                            die(sys.exc_traceback.tb_lineno, sock)
         else:
             print("Waiting for opponent turn...")
             if iamserver:
@@ -336,17 +336,17 @@ def main():
                     gamedata = serverread(sock, connection)
                 except:
                     print("Unexpected error receiving response")
-                    die(260, sock)
+                    die(sys.exc_traceback.tb_lineno, sock)
             else:
                 try:
                     gamedata = sock.recv(1024)
                 except:
                     print("Unexpected error receiving response")
-                    die(270, sock)
+                    die(sys.exc_traceback.tb_lineno, sock)
 
         if gamedata == "DIE" or gamedata == "":
             print("Opponent sent kill message")
-            die(280, sock)
+            die(sys.exc_traceback.tb_lineno, sock)
         else:
             if mycolor == "R":
                 theircolor = "Y"
