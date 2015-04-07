@@ -5,7 +5,7 @@
 # Written for Python 2.6
 #
 
-import getopt, os, random, socket, sys, SocketServer
+import getopt, os, random, socket, sys
 
 board_cols = 7
 board_rows = 6
@@ -26,15 +26,12 @@ def usage():
     print("host\t: IP address to connect with")
     sys.exit(0)
 
-def client_die(code,sock):
-    sock.send("DIE")
-    sock.close()
-    print("Exit with code " + str(code))
-    sys.exit(code)
-
-def server_die(code,sock):
-    sock.send("DIE")
-    sock.close()
+def die(code,sock):
+    try:
+        sock.send("DIE")
+        sock.close()
+    except:
+        pass
     print("Exit with code " + str(code))
     sys.exit(code)
 
@@ -89,10 +86,10 @@ def startserver(ip, port, sock):
         connection, client_address = sock.accept()
     except socket.error as err:
         print str(err)
-        server_die(100,sock)
+        die(100,sock)
     except:
         print("Unexpected error starting server on port " + str(port))
-        server_die(100,sock)
+        die(100,sock)
     else:
         return connection
 
@@ -102,7 +99,7 @@ def serverread(sock, connection):
        return data
     except:
        print("Server ended unexpectedly")
-       server_die(100,sock)
+       die(100,sock)
 
 def main():
 
@@ -112,9 +109,14 @@ def main():
     server_ip = "0.0.0.0"
     ready = "READY"
     gamedata = "NOT READY"
+    mefirst = "ME FIRST"
+    youfirst = "YOU FIRST"
 
     iamclient = False
     iamserver = False
+    igofirst = False
+
+    gameon = True
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'p:h')
@@ -164,11 +166,17 @@ def main():
         iamclient = True
         sock.send(ready)
         gamedata = sock.recv(1024)
-        if gamedata == ready:
+        if gamedata in mefirst + youfirst:
             print("Sever connected OK")
+            if gamedata == youfirst:
+                print("I shall be going first")
+                igofirst = True
+            else:
+                print("Opponent will be going first")
+                igofirst = False
         else:
             print("Unexpected response from server: " + gamedata)
-            client_die(100,sock)
+            die(100,sock)
     else:
         print("Acting as server")
         iamserver = True
@@ -177,33 +185,23 @@ def main():
         gamedata = serverread(sock, connection)
         if gamedata == ready:
             print("Client connected OK")
-            connection.send(ready)
+            print("Picking who starts at random")
+            if random.randint(0, 1000) % 2 == 0:
+                print("I shall be going first")
+                igofirst = True
+                connection.send(mefirst)
+            else:
+                print("Opponent will be going first")
+                igofirst = False
+                connection.send(youfirst)
         else:
             print("Unexpected response from client: " + gamedata)
-            server_die(100,connection)
-
-    if iamserver:
-        print("Picking who starts at random")
-        if random.randint(0, 1000) % 2 == 0:
-            print("Me first")
-        else:
-            print("Opponent first")
-
-
-
-
-
-
-
-
-
-
-
-
-
+            die(100,connection)
 
     initialise_board(board)
     print_board(board)
+
+
 
 
 
