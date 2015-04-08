@@ -2,7 +2,7 @@
 
 # Two player connect4 over TCP
 #
-# Written for Python 2.6
+# Written for Python 2.6 (tested also on Python 3.3)
 #
 
 import getopt, os, random, socket, sys
@@ -27,7 +27,7 @@ def usage():
 
 def die(code, sock):
     try:
-        sock.send("DIE")
+        sock.send("DIE".encode('ascii'))
         sock.close()
     except:
         pass
@@ -55,16 +55,16 @@ def valid_ip(ip):
         return False
 
 def pingtest(ip):
-    print("Checking " + ip + " is alive")
+    print("Checking " + str(ip) + " is alive")
     try:
         if os.system("ping -c 1 -W 2 " + ip + " > /dev/null 2>&1") == 0:
-            print(ip + " appears to be alive")
+            print(str(ip) + " appears to be alive")
             return True
         else:
-            print(ip + " does not appear to be alive")
+            print(str(ip) + " does not appear to be alive")
             return False
     except:
-        print(ip + " does not appear to be alive")
+        print(str(ip) + " does not appear to be alive")
         return False
 
 def tryconnect(ip, port, sock):
@@ -85,7 +85,7 @@ def startserver(ip, port, sock):
         sock.listen(1)
         connection, client_address = sock.accept()
     except socket.error as err:
-        print str(err)
+        print(str(err))
         print("Socket error")
         die(110, sock)
     except:
@@ -96,7 +96,7 @@ def startserver(ip, port, sock):
 
 def serverread(sock, connection):
     try:
-       data = connection.recv(1024)
+       data = connection.recv(1024).decode('ascii')
        return data
     except:
        print("Server ended unexpectedly")
@@ -204,7 +204,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'p:h')
     except getopt.GetoptError as err:
-        print str(err)
+        print(str(err))
         usage()
         die(140, sock)
 
@@ -238,7 +238,7 @@ def main():
     else:
         ip = ''.join(args)
         if not valid_ip(ip):
-            print("Invalid IP address " + ip)
+            print("Invalid IP address " + str(ip))
             usage()
             die(190, sock)
 
@@ -248,9 +248,9 @@ def main():
     if tryconnect(ip, port, sock):
         print("Acting as client")
         iamclient = True
-        sock.send(ready)
-        handshake = sock.recv(1024)
-        if handshake in mefirst + youfirst:
+        sock.send(ready.encode('ascii'))
+        handshake = sock.recv(1024).decode('ascii')
+        if handshake == mefirst or handshake == youfirst:
             print("Sever connected OK")
             if handshake == youfirst:
                 print("I shall be going first")
@@ -261,7 +261,7 @@ def main():
                 myturn = False
                 mycolor = "Y"
         else:
-            print("Unexpected response from server: " + handshake)
+            print("Unexpected response from server: " + str(handshake))
             die(210, sock)
     else:
         print("Acting as server")
@@ -276,14 +276,14 @@ def main():
                 print("I shall be going first")
                 myturn = True
                 mycolor = "R"
-                connection.send(mefirst)
+                connection.send(mefirst.encode('ascii'))
             else:
                 print("Opponent will be going first")
                 myturn = False
                 mycolor = "Y"
-                connection.send(youfirst)
+                connection.send(youfirst.encode('ascii'))
         else:
-            print("Unexpected response from client: " + handshake)
+            print("Unexpected response from client: " + str(handshake))
             die(220, connection)
 
     initialise_board(board)
@@ -324,13 +324,13 @@ def main():
                     gamedata = mycol
                     if iamserver:
                         try:
-                            connection.send(str(mycol))
+                            connection.send(str(mycol).encode('ascii'))
                         except:
                             print("Unexpected error sending response")
                             die(240, sock)
                     else:
                         try:
-                            sock.send(str(mycol))
+                            sock.send(str(mycol).encode('ascii'))
                         except:
                             print("Unexpected error sending response")
                             die(250, sock)
@@ -344,7 +344,7 @@ def main():
                     die(260, sock)
             else:
                 try:
-                    gamedata = sock.recv(1024)
+                    gamedata = sock.recv(1024).decode('ascii')
                 except:
                     print("Unexpected error receiving response")
                     die(270, sock)
