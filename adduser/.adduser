@@ -1,0 +1,20 @@
+# Sample .adduser file for the adduser suite
+#
+# Place in the same directory as adduser tools
+#
+[adduser]
+password = REDACTED
+
+[servers]
+linux = linux.server
+kadmin = kerberos.server
+keytab = keytab.server
+crontab = crontab.server
+hdfs = hdfs.server
+
+[scripts]
+linux = /usr/local/bin/adduser.linux.py
+kadmin = /usr/local/bin/adduser.kerberos.py
+keytab = /usr/local/bin/adduser.keytab.py
+crontab = /usr/local/bin/adduser.crontab.py
+hdfs = /usr/local/bin/adduser.hdfs.py

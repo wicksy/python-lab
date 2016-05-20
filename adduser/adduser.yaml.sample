@@ -1,0 +1,15 @@
+# Sample yaml file for the addusers suite of scripts
+#
+# adduser.yaml
+#
+# Place in current working directory when running adduser.py
+#
+
+users:
+  - Martin Wicks
+  - John Middle Name Smith
+  - Jane Doe
+
+groups:
+  - users
+  - app
